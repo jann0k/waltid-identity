@@ -2,8 +2,9 @@ FROM docker.io/gradle:jdk21 AS buildstage
 
 COPY . /work/.
 WORKDIR /work/waltid-services/waltid-issuer-api/
-RUN gradle build || return 0
-RUN gradle clean installDist
+
+RUN ../../gradlew build || return 0
+RUN ../../gradlew clean installDist
 
 FROM docker.io/eclipse-temurin:17
 
