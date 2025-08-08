@@ -77,7 +77,11 @@ data class CredentialSupported(
     @SerialName("credential_definition") val credentialDefinition: CredentialDefinition? = null,
     @SerialName("doctype") val docType: String? = null,
     @Serializable(ClaimDescriptorMapSerializer::class) val credentialSubject: Map<String, ClaimDescriptor>? = null,
-    @Serializable(ClaimDescriptorNamespacedMapSerializer::class) val claims: Map<String, Map<String, ClaimDescriptor>>? = null,
+    //@Serializable(ClaimDescriptorNamespacedMapSerializer::class) val claims: Map<String, Map<String, ClaimDescriptor>>? = null,cd
+    // fix claims parsing for sd-jwt, this breaks Credential Issuer Metadata for mdoc
+    // see sd-jwt https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#name-credential-issuer-metadata-6
+    // see mdoc https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#name-credential-issuer-metadata-5
+    @Serializable(ClaimDescriptorMapSerializer::class) val claims: Map<String, ClaimDescriptor>? = null,
     val order: List<String>? = null,
     @SerialName("sdJwtVcTypeMetadata") val sdJwtVcTypeMetadata: SDJWTVCTypeMetadata? = null,
     override val customParameters: Map<String, JsonElement>? = mapOf()
