@@ -11,9 +11,15 @@ import id.walt.verifier.entra.entraVerifierApi
 import id.walt.verifier.web.plugins.configureHTTP
 import id.walt.verifier.web.plugins.configureMonitoring
 import id.walt.verifier.web.plugins.configureRouting
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.application.*
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.security.Security
 
 suspend fun main(args: Array<String>) {
+    val logger = KotlinLogging.logger {}
+    Security.addProvider(BouncyCastleProvider())
+    logger.debug { "Added BC" }
     ServiceMain(
         ServiceConfiguration("verifier"), ServiceInitialization(
             features = FeatureCatalog,
