@@ -164,19 +164,57 @@ data class MDoc(
      * @param verificationParams Verification parameters, defining verification types and other params
      * @param cryptoProvider The crypto provider implementation to use for the verification
      */
+//    fun verify(verificationParams: MDocVerificationParams, cryptoProvider: COSECryptoProvider): Boolean {
+//        // check points 1-5 of ISO 18013-5: 9.3.1
+//        return VerificationType.all.all { type ->
+//            !verificationParams.verificationTypes.has(type) || when (type) {
+//                VerificationType.VALIDITY -> verifyValidity()
+//                VerificationType.DOC_TYPE -> verifyDocType()
+//                VerificationType.CERTIFICATE_CHAIN -> verifyCertificate(cryptoProvider, verificationParams.issuerKeyID)
+//                VerificationType.ITEMS_TAMPER_CHECK -> verifyIssuerSignedItems()
+//                VerificationType.ISSUER_SIGNATURE -> verifySignature(cryptoProvider, verificationParams.issuerKeyID)
+//                VerificationType.DEVICE_SIGNATURE -> verifyDeviceSigOrMac(verificationParams, cryptoProvider)
+//            }
+//        }
+//    }
+
     fun verify(verificationParams: MDocVerificationParams, cryptoProvider: COSECryptoProvider): Boolean {
-        // check points 1-5 of ISO 18013-5: 9.3.1
-        return VerificationType.all.all { type ->
-            !verificationParams.verificationTypes.has(type) || when (type) {
-                VerificationType.VALIDITY -> verifyValidity()
-                VerificationType.DOC_TYPE -> verifyDocType()
-                VerificationType.CERTIFICATE_CHAIN -> verifyCertificate(cryptoProvider, verificationParams.issuerKeyID)
-                VerificationType.ITEMS_TAMPER_CHECK -> verifyIssuerSignedItems()
-                VerificationType.ISSUER_SIGNATURE -> verifySignature(cryptoProvider, verificationParams.issuerKeyID)
-                VerificationType.DEVICE_SIGNATURE -> verifyDeviceSigOrMac(verificationParams, cryptoProvider)
+        // Track overall result
+        var allPassed = true
+
+        // Iterate all verification types
+        VerificationType.all.forEach { type ->
+            // Skip types not requested
+            if (!verificationParams.verificationTypes.has(type)) return@forEach
+
+            // Perform check and log
+            val passed = try {
+                when (type) {
+                    VerificationType.VALIDITY -> verifyValidity()
+                    VerificationType.DOC_TYPE -> verifyDocType()
+                    VerificationType.CERTIFICATE_CHAIN -> verifyCertificate(cryptoProvider, verificationParams.issuerKeyID)
+                    VerificationType.ITEMS_TAMPER_CHECK -> verifyIssuerSignedItems()
+                    VerificationType.ISSUER_SIGNATURE -> verifySignature(cryptoProvider, verificationParams.issuerKeyID)
+                    VerificationType.DEVICE_SIGNATURE -> verifyDeviceSigOrMac(verificationParams, cryptoProvider)
+                }
+            } catch (e: Exception) {
+                println("Verification ${type.name} threw an exception: ${e.message}")
+                e.printStackTrace()
+                false
+            }
+
+            // Log result
+            if (passed) {
+                println("Verification ${type.name}: PASSED")
+            } else {
+                println("Verification ${type.name}: FAILED")
+                allPassed = false
             }
         }
+
+        return allPassed
     }
+
 
     private fun selectDisclosures(mDocRequest: MDocRequest): IssuerSigned {
         return IssuerSigned(

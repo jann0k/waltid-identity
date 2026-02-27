@@ -214,11 +214,46 @@ object OIDCVerifierService : OpenIDCredentialVerifier(
     }
 
     private fun verifyMdoc(tokenResponse: TokenResponse, session: PresentationSession): Boolean {
+//        val mdocHandoverRestored = OpenID4VP.generateMDocOID4VPHandover(
+//            authorizationRequest = session.authorizationRequest!!,
+//            mdocNonce = Base64.getUrlDecoder().decode(tokenResponse.jwsParts!!.header["apu"]!!.jsonPrimitive.content)
+//                .decodeToString()
+//        )
+
+        val authRequest = session.authorizationRequest
+            ?: error("AuthorizationRequest missing in session")
+
+        val mdocNonce = when (authRequest.responseMode) {
+
+            ResponseMode.direct_post_jwt -> {
+                val jws = tokenResponse.jwsParts
+                    ?: error("Expected JWS response for direct_post.jwt but jwsParts was null")
+
+                val apu = jws.header["apu"]?.jsonPrimitive?.content
+                    ?: error("Missing 'apu' header in JWS")
+
+                Base64.getUrlDecoder()
+                    .decode(apu)
+                    .decodeToString()
+            }
+
+            ResponseMode.direct_post -> {
+                authRequest.nonce
+                    ?: error("Nonce missing in authorization request")
+            }
+
+            else -> error("Unsupported response_mode: ${authRequest.responseMode}")
+        }
+
+
         val mdocHandoverRestored = OpenID4VP.generateMDocOID4VPHandover(
-            authorizationRequest = session.authorizationRequest!!,
-            mdocNonce = Base64.getUrlDecoder().decode(tokenResponse.jwsParts!!.header["apu"]!!.jsonPrimitive.content)
-                .decodeToString()
+            authorizationRequest = authRequest,
+            mdocNonce = mdocNonce
         )
+
+        val mdocHandover = mdocHandoverRestored.toCBOR().toHexString()
+        logger.info { "mdocHandover hex: ${mdocHandover}" }
+        logger.info { "sessionTranscript: ${ListElement(listOf(NullElement(), NullElement(), mdocHandoverRestored)).toCBOR().toHexString()}"}
 
         val parsedDeviceResponse = DeviceResponse.fromCBORBase64URL(tokenResponse.vpToken!!.jsonPrimitive.content)
 
