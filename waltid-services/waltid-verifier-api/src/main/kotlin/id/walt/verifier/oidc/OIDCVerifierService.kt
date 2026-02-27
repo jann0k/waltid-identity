@@ -251,6 +251,10 @@ object OIDCVerifierService : OpenIDCredentialVerifier(
             mdocNonce = mdocNonce
         )
 
+        val mdocHandover = mdocHandoverRestored.toCBOR().toHexString()
+        logger.info { "mdocHandover hex: ${mdocHandover}" }
+        logger.info { "sessionTranscript: ${ListElement(listOf(NullElement(), NullElement(), mdocHandoverRestored)).toCBOR().toHexString()}"}
+
         val parsedDeviceResponse = DeviceResponse.fromCBORBase64URL(tokenResponse.vpToken!!.jsonPrimitive.content)
 
         val parsedMdoc = parsedDeviceResponse.documents[0]
