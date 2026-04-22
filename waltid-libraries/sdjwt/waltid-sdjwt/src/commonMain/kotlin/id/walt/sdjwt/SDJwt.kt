@@ -96,8 +96,6 @@ open class SDJwt internal constructor(
         }
 
         return sdJwtParts.joinToString(SEPARATOR_STR)
-            // eudiw lib expects ending ~
-            .plus(SEPARATOR_STR)
     }
 
     /**
